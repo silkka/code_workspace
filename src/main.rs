@@ -10,9 +10,15 @@ struct Workspace {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Alfred_Item {
+struct AlfredItem {
     uid: String,
-    title: String
+    title: String,
+    arg: String
+}
+
+#[derive(Serialize, Deserialize)]
+struct Items {
+    items: Vec<AlfredItem>
 }
 
 fn main() {
@@ -53,7 +59,7 @@ fn main() {
 
     for space in worskpaces {
         let space = &space[7..];
-        println!("{}", &space);
+        //println!("{}", &space);
 
         if Path::new(&space).exists() {
             existing_worskpaces.push(space.to_string());
@@ -61,9 +67,25 @@ fn main() {
     }
     
 
-    println!("Existing ones:");
+    //println!("Existing ones:");
+
+    let mut aflred_output: Vec<AlfredItem> = Vec::new();
 
     for space in existing_worskpaces {
-        println!("{}", space);
+        // println!("{}", space);
+        let space = AlfredItem {
+            title: String::from(&space),
+            uid: String::from(&space),
+            arg: String::from(&space),
+
+        };
+        aflred_output.push(space);
     }
+
+    let alfred_output: Items = Items { items:aflred_output };
+
+    let j = serde_json::to_string_pretty(&alfred_output).unwrap();
+
+    println!("{}", j);
+
 }
