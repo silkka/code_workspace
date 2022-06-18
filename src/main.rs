@@ -40,19 +40,12 @@ fn main() {
 
     let folders = get_workspace_folders(WORSPACE_LOCATION);
 
-    let worskpaces: Vec<String> = get_workspace_locations(folders);
-
-    let mut existing_worskpaces: Vec<String> = Vec::new();
-
-    for space in worskpaces {
-        if Path::new(&space).exists() {
-            existing_worskpaces.push(space.to_string());
-        }
-    }
+    let mut worskpaces: Vec<String> = get_workspace_locations(folders);
+    worskpaces.retain(|w| Path::new(&w).exists()); // Drop workspaces that don't exist
     
     let mut aflred_output: Vec<AlfredItem> = Vec::new();
 
-    for space in existing_worskpaces {
+    for space in worskpaces {
         // println!("{}", space);
         let space = AlfredItem {
             title: String::from(&space),
