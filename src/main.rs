@@ -21,49 +21,20 @@ struct Items {
     items: Vec<AlfredItem>
 }
 
-fn get_workspace_folders(workspace_location: &str) -> ReadDir {
-    if let Ok(files) = fs::read_dir(workspace_location) {
-        files
-    } else {
-        panic!("Workspace folder is unreadable. Check path and permissions")
-    }
-}
+
 
 fn main() {
     const WORSPACE_LOCATION: &str="/Users/anttipeltola/Library/Application Support/Code/User/workspaceStorage";
     // a8deed49d145245ed73e0540da56796e/workspace.json";
 
-    let files = get_workspace_folders(WORSPACE_LOCATION);
+    let folders = get_workspace_folders(WORSPACE_LOCATION);
 
-    let mut worskpaces: Vec<String> = Vec::new();
-    
-    for file in files {
-        let mut file = file.unwrap().path();
-        file.push("workspace.json");
-
-        // println!("{}", &file.display());
-
-        let contents : String= match fs::read_to_string(file) {
-            Ok(contents) => contents,
-            Err(_) => continue,
-        };
-    
-        // println!("{}", &contents);
-
-        let w: Workspace= match serde_json::from_str(&contents) {
-            Ok(w) => w,
-            Err(_) => panic!(),
-        };
-
-        // println!("{}", &w.folder);
-
-        worskpaces.push(w.folder);
-    }
+    let worskpaces: Vec<String> = get_workspace_locations(folders);
 
     let mut existing_worskpaces: Vec<String> = Vec::new();
 
     for space in worskpaces {
-        let space = &space[7..];
+        //let space = &space[7..];
         //println!("{}", &space);
 
         if Path::new(&space).exists() {
@@ -93,4 +64,49 @@ fn main() {
 
     println!("{}", j);
 
+}
+
+fn get_workspace_folders(workspace_location: &str) -> ReadDir {
+    if let Ok(files) = fs::read_dir(workspace_location) {
+        files
+    } else {
+        panic!("Workspace folder is unreadable. Check path and permissions")
+    }
+}
+
+/// Returns a vector with vscode workspace paths.
+/// Format: file:///vscode/workspace/locaton
+/// # Arguments 
+/// * `folders` ReadDir iterator for Code/User/workspaceStorage
+fn get_workspace_locations(folders: ReadDir) -> Vec<String> {
+    let mut worskpaces: Vec<String> = Vec::new();
+
+    for file in folders {
+        // Get the contents 
+        let contents = match get_workspace_json_contents(file) {
+            Some(value) => value,
+            None => continue,
+        };
+        let w: Workspace= match serde_json::from_str(&contents) {
+            Ok(w) => w,
+            Err(_) => continue,
+        };
+        let w = w.folder[7..].to_string();
+        worskpaces.push(w);
+    }
+
+    worskpaces
+}
+
+fn get_workspace_json_contents(file: Result<fs::DirEntry, std::io::Error>) -> Option<String> {
+    let mut file = match file {
+            Ok(t) => t,
+            Err(_) => return None,
+        }.path();
+    file.push("workspace.json");
+    let contents : String= match fs::read_to_string(file) {
+        Ok(contents) => contents,
+        Err(_) => return None,
+    };
+    Some(contents)
 }
