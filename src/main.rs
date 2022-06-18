@@ -1,8 +1,9 @@
 use std::path::Path;
-use std::{fs};
+use std::fs;
 
 use std::fs::ReadDir;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 #[derive(Serialize, Deserialize)]
 struct Workspace {
@@ -40,35 +41,27 @@ impl AlfredItem {
     }
 }
 
-
 #[derive(Serialize, Deserialize)]
 struct Items {
     items: Vec<AlfredItem>
 }
 
-
 fn main() {
     const WORSPACE_LOCATION: &str="/Users/anttipeltola/Library/Application Support/Code/User/workspaceStorage";
-    // a8deed49d145245ed73e0540da56796e/workspace.json";
 
+    // Parse the worskpace locations from worspaceStorage
     let folders = get_workspace_folders(WORSPACE_LOCATION);
-
     let mut worskpaces: Vec<String> = get_workspace_locations(folders);
     worskpaces.retain(|w| Path::new(&w).exists()); // Drop workspaces that don't exist
     
-    let mut aflred_output: Vec<AlfredItem> = Vec::new();
-
-    for space in worskpaces {
-        let space = AlfredItem::new(space);
-        aflred_output.push(space);
-    }
-
+    // Construct Alfred output json
+    let aflred_output: Vec<AlfredItem> = worskpaces.into_iter()
+        .map(|x| AlfredItem::new(x))
+        .collect();
     let alfred_output: Items = Items { items:aflred_output };
+    let alfred_output = json!(alfred_output);
 
-    let j = serde_json::to_string_pretty(&alfred_output).unwrap();
-
-    println!("{}", j);
-
+    println!("{:#}", alfred_output);
 }
 
 /// Returns iterator of the contents of the workspace storage
