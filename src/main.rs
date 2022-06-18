@@ -21,14 +21,19 @@ struct Items {
     items: Vec<AlfredItem>
 }
 
+fn get_workspace_folders(workspace_location: &str) -> ReadDir {
+    if let Ok(files) = fs::read_dir(workspace_location) {
+        files
+    } else {
+        panic!("Workspace folder is unreadable. Check path and permissions")
+    }
+}
+
 fn main() {
     const WORSPACE_LOCATION: &str="/Users/anttipeltola/Library/Application Support/Code/User/workspaceStorage";
     // a8deed49d145245ed73e0540da56796e/workspace.json";
 
-    let files: ReadDir= match fs::read_dir(WORSPACE_LOCATION) {
-        Ok(files) => files,
-        Err(_) => panic!(),
-    };
+    let files = get_workspace_folders(WORSPACE_LOCATION);
 
     let mut worskpaces: Vec<String> = Vec::new();
     
