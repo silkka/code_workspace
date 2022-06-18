@@ -28,14 +28,17 @@ impl Workspace {
 struct AlfredItem {
     uid: String,
     title: String,
-    arg: String
+    subtitle: String,
+    arg: String,
 }
 
 impl AlfredItem {
     fn new(path: String) -> Self {
+        let title = path.split('/').last().unwrap_or(&path);
         Self {
-            title: String::from(&path),
             uid: String::from(&path),
+            title: String::from(title),
+            subtitle: String::from(&path),
             arg: String::from(&path),
         }
     }
