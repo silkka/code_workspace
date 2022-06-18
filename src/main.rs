@@ -19,6 +19,8 @@ impl Workspace {
         }
         &self.folder
     }
+
+
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,6 +29,17 @@ struct AlfredItem {
     title: String,
     arg: String
 }
+
+impl AlfredItem {
+    fn new(path: String) -> Self {
+        Self {
+            title: String::from(&path),
+            uid: String::from(&path),
+            arg: String::from(&path),
+        }
+    }
+}
+
 
 #[derive(Serialize, Deserialize)]
 struct Items {
@@ -46,13 +59,7 @@ fn main() {
     let mut aflred_output: Vec<AlfredItem> = Vec::new();
 
     for space in worskpaces {
-        // println!("{}", space);
-        let space = AlfredItem {
-            title: String::from(&space),
-            uid: String::from(&space),
-            arg: String::from(&space),
-
-        };
+        let space = AlfredItem::new(space);
         aflred_output.push(space);
     }
 
