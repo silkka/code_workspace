@@ -9,6 +9,18 @@ struct Workspace {
     folder: String,
 }
 
+impl Workspace {
+    /// Returns a reference to the folder path of this [`Workspace`].
+    /// Removes file:// from the start of the path
+    fn folder_path(&self) -> &str {
+        const FILE_PREFIX:&str = "file://";
+        if self.folder.starts_with(FILE_PREFIX) {
+            return &self.folder[FILE_PREFIX.len()..]
+        }
+        &self.folder
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 struct AlfredItem {
     uid: String,
@@ -22,7 +34,6 @@ struct Items {
 }
 
 
-
 fn main() {
     const WORSPACE_LOCATION: &str="/Users/anttipeltola/Library/Application Support/Code/User/workspaceStorage";
     // a8deed49d145245ed73e0540da56796e/workspace.json";
@@ -34,17 +45,11 @@ fn main() {
     let mut existing_worskpaces: Vec<String> = Vec::new();
 
     for space in worskpaces {
-        //let space = &space[7..];
-        //println!("{}", &space);
-
         if Path::new(&space).exists() {
             existing_worskpaces.push(space.to_string());
         }
     }
     
-
-    //println!("Existing ones:");
-
     let mut aflred_output: Vec<AlfredItem> = Vec::new();
 
     for space in existing_worskpaces {
@@ -66,6 +71,11 @@ fn main() {
 
 }
 
+/// Returns iterator of the contents of the workspace storage
+///
+/// # Panics
+///
+/// Panics if the workspace storage folder can't be read.
 fn get_workspace_folders(workspace_location: &str) -> ReadDir {
     if let Ok(files) = fs::read_dir(workspace_location) {
         files
@@ -75,31 +85,34 @@ fn get_workspace_folders(workspace_location: &str) -> ReadDir {
 }
 
 /// Returns a vector with vscode workspace paths.
-/// Format: file:///vscode/workspace/locaton
+/// Format: /vscode/workspace/locaton
 /// # Arguments 
 /// * `folders` ReadDir iterator for Code/User/workspaceStorage
 fn get_workspace_locations(folders: ReadDir) -> Vec<String> {
     let mut worskpaces: Vec<String> = Vec::new();
 
-    for file in folders {
-        // Get the contents 
-        let contents = match get_workspace_json_contents(file) {
+    for folder in folders {
+        // Get the workspace.json file contents
+        let contents = match get_workspace_json_contents(folder) {
             Some(value) => value,
             None => continue,
         };
+        // Parse workspace location from workspace.json
         let w: Workspace= match serde_json::from_str(&contents) {
             Ok(w) => w,
             Err(_) => continue,
         };
-        let w = w.folder[7..].to_string();
-        worskpaces.push(w);
+        worskpaces.push(w.folder_path().to_string());
     }
 
     worskpaces
 }
 
-fn get_workspace_json_contents(file: Result<fs::DirEntry, std::io::Error>) -> Option<String> {
-    let mut file = match file {
+/// Returns the contents of a workspace.json file
+/// # Arguments
+/// * folder: vscode worskpace folder with worskpace.json file inside
+fn get_workspace_json_contents(folder: Result<fs::DirEntry, std::io::Error>) -> Option<String> {
+    let mut file = match folder {
             Ok(t) => t,
             Err(_) => return None,
         }.path();
