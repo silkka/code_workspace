@@ -1,9 +1,9 @@
-use std::fs;
-use std::path::Path;
-
+use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::fs;
 use std::fs::ReadDir;
+use std::path::Path;
 
 #[derive(Serialize, Deserialize)]
 struct Workspace {
@@ -47,12 +47,27 @@ struct Items {
     items: Vec<AlfredItem>,
 }
 
+#[derive(Debug, Parser)]
+#[clap(
+    author = "Silkka",
+    version = "1",
+    about = "List VSCode workspaces for Alfred's Script Filter"
+)]
+struct Args {
+    #[clap(
+        short,
+        long,
+        value_parser,
+        help = "Full path to workspace storage (Code/User/workspaceStorage)"
+    )]
+    workspace_storage: String,
+}
+
 fn main() {
-    const WORSPACE_LOCATION: &str =
-        "/Users/anttipeltola/Library/Application Support/Code/User/workspaceStorage";
+    let args = Args::parse();
 
     // Parse the worskpace locations from worspaceStorage
-    let folders = get_workspace_folders(WORSPACE_LOCATION);
+    let folders = get_workspace_folders(args.workspace_storage);
     let mut worskpaces: Vec<String> = get_workspace_locations(folders);
     worskpaces.retain(|w| Path::new(&w).exists()); // Drop workspaces that don't exist
 
@@ -72,7 +87,7 @@ fn main() {
 /// # Panics
 ///
 /// Panics if the workspace storage folder can't be read.
-fn get_workspace_folders(workspace_location: &str) -> ReadDir {
+fn get_workspace_folders(workspace_location: String) -> ReadDir {
     if let Ok(files) = fs::read_dir(workspace_location) {
         files
     } else {
